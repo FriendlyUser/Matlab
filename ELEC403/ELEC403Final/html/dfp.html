@@ -1,0 +1,256 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>dfp</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-08-09"><meta name="DC.source" content="dfp.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% Program: dfp.m</span>
+<span class="comment">% Title: Quasi_Newton DFP algorithm</span>
+<span class="comment">% Description: Implements the quasi-Newton algorithm</span>
+<span class="comment">% with the Davidon-Fletcher-Powell (DFP) updating</span>
+<span class="comment">% formula described in Algorithm 7.3.</span>
+<span class="comment">% Theory: See Practical Optimization Secs. 7.5 and 7.10.</span>
+<span class="comment">% Input:</span>
+<span class="comment">% fname: objective function</span>
+<span class="comment">% gname: gradient of the objective function</span>
+<span class="comment">% x0: initial point</span>
+<span class="comment">% epsi1: termination tolerance</span>
+<span class="comment">% Output:</span>
+<span class="comment">% xs: solution point</span>
+<span class="comment">% fs: objective function evaluated at xs.</span>
+<span class="comment">% k: number of iterations at convergence</span>
+<span class="comment">% Example:</span>
+<span class="comment">% Find the minimum of the Himmelblau function</span>
+<span class="comment">% f = (x1^2 + x2 - 11)^2 + (x1 + x2^2 - 7)^2</span>
+<span class="comment">% using initial point x0 = [6 6]' and termination</span>
+<span class="comment">% tolerance epsi1 = 1e-6.</span>
+<span class="comment">% Solution:</span>
+<span class="comment">% Execute the command</span>
+<span class="comment">% [xs,fs,k] = dfp('f_himm','g_himm',[6 6]',1e-6)</span>
+<span class="comment">% Notes:</span>
+<span class="comment">% 1. The program can be applied to any customized function</span>
+<span class="comment">% by defining the function of interest, and its gradient.</span>
+<span class="comment">% =========================================================</span>
+<span class="keyword">function</span> [xs,fs,k] = dfp(fname,gname,x0,epsi1)
+disp(<span class="string">' '</span>)
+disp(<span class="string">'Program dfp.m'</span>)
+n = length(x0);
+I = eye(n);
+k = 1;
+iter = 1;
+sprintf(<span class="string">'&lt;h3&gt;&lt;b&gt;------- ITERATION 1 ------&lt;/b&gt;&lt;/h3&gt;\n'</span>)
+sprintf(<span class="string">'&lt;h4&gt;STEP 1&lt;/h4&gt;\n'</span>)
+xk = x0
+Sk = I
+fk = feval(fname,xk);
+gk = feval(gname,xk)
+sprintf(<span class="string">'&lt;h4&gt;STEP 2&lt;/h4&gt;\n'</span>)
+dk = -Sk*gk
+ak = inex_lsearch(xk,dk,fname,gname)
+dtk = ak*dk
+xk_new = xk + dtk
+fk_new = feval(fname,xk_new);
+dfk = abs(fk - fk_new);
+err = max(dfk,norm(dtk));
+sprintf(<span class="string">'&lt;h4&gt;STEP 3&lt;/h4&gt;\n'</span>)
+sprintf(<span class="string">'Norm of delta is &lt;b&gt;%3.2f&lt;/b&gt; and epsi is &lt;b&gt;%s&lt;/b&gt;\n'</span>,err, epsi1)
+<span class="keyword">while</span> err &gt;= epsi1,
+      sprintf(<span class="string">'&lt;h4&gt;STEP 4&lt;/h4&gt;\n'</span>)
+      gk_new = feval(gname,xk_new)
+      gmk = gk_new - gk
+      D = dtk'*gmk;
+      <span class="keyword">if</span> D &lt;= 0,
+         Sk = I;
+      <span class="keyword">else</span>
+         sg = Sk*gmk
+         sw1 = dtk*dtk'
+         sw2 = sg*sg'
+         sw3 = gmk'*sg
+         Sk = Sk + sw1/D - sw2/sw3
+      <span class="keyword">end</span>
+      fk = fk_new;
+      iter = iter + 1;
+      gk = gk_new
+      sprintf(<span class="string">'&lt;h3&gt;------- Iteration %d ------&lt;/h3&gt;\n'</span>,iter)
+      sprintf(<span class="string">'&lt;h4&gt;STEP 2&lt;/h4&gt;\n'</span>)
+      xk = xk_new;
+      dk = -Sk*gk
+      ak = inex_lsearch(xk,dk,fname,gname)
+      dtk = ak*dk
+      xk_new = xk + dtk;
+      fk_new = feval(fname,xk_new);
+      dfk = abs(fk - fk_new);
+      err = max(dfk,norm(dtk));
+      sprintf(<span class="string">'&lt;h4&gt;STEP 3&lt;/h4&gt;\n'</span>)
+      sprintf(<span class="string">'Norm of delta is &lt;b&gt;%3.2f &lt;/b&gt; and epsi is &lt;b&gt; %s &lt;/b&gt; \n'</span>,err, epsi1)
+      k = k + 1;
+<span class="keyword">end</span>
+format <span class="string">long</span>
+disp(<span class="string">'solution point:'</span>)
+xs = xk_new
+disp(<span class="string">'objective function at the solution point:'</span>)
+fs = feval(fname,xs)
+format <span class="string">short</span>
+disp(<span class="string">'number of iterations at convergence:'</span>)
+k
+</pre><pre class="codeoutput"> 
+Program dfp.m
+</pre><pre class="codeoutput error">Not enough input arguments.
+
+Error in dfp (line 31)
+n = length(x0);
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Program: dfp.m
+% Title: Quasi_Newton DFP algorithm
+% Description: Implements the quasi-Newton algorithm
+% with the Davidon-Fletcher-Powell (DFP) updating
+% formula described in Algorithm 7.3.
+% Theory: See Practical Optimization Secs. 7.5 and 7.10.
+% Input:
+% fname: objective function
+% gname: gradient of the objective function
+% x0: initial point
+% epsi1: termination tolerance
+% Output:
+% xs: solution point
+% fs: objective function evaluated at xs.
+% k: number of iterations at convergence
+% Example:
+% Find the minimum of the Himmelblau function
+% f = (x1^2 + x2 - 11)^2 + (x1 + x2^2 - 7)^2
+% using initial point x0 = [6 6]' and termination 
+% tolerance epsi1 = 1e-6.
+% Solution:
+% Execute the command
+% [xs,fs,k] = dfp('f_himm','g_himm',[6 6]',1e-6)
+% Notes:
+% 1. The program can be applied to any customized function
+% by defining the function of interest, and its gradient.
+% =========================================================
+function [xs,fs,k] = dfp(fname,gname,x0,epsi1)
+disp(' ')
+disp('Program dfp.m')
+n = length(x0);
+I = eye(n);
+k = 1;
+iter = 1;
+sprintf('<h3><b>REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- ITERATION 1 REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH</b></h3>\n')
+sprintf('<h4>STEP 1</h4>\n')
+xk = x0
+Sk = I
+fk = feval(fname,xk);
+gk = feval(gname,xk)
+sprintf('<h4>STEP 2</h4>\n')
+dk = -Sk*gk
+ak = inex_lsearch(xk,dk,fname,gname)
+dtk = ak*dk
+xk_new = xk + dtk
+fk_new = feval(fname,xk_new);
+dfk = abs(fk - fk_new);
+err = max(dfk,norm(dtk));
+sprintf('<h4>STEP 3</h4>\n')
+sprintf('Norm of delta is <b>%3.2f</b> and epsi is <b>%s</b>\n',err, epsi1)
+while err >= epsi1,
+      sprintf('<h4>STEP 4</h4>\n')
+      gk_new = feval(gname,xk_new)
+      gmk = gk_new - gk
+      D = dtk'*gmk;
+      if D <= 0,
+         Sk = I;
+      else
+         sg = Sk*gmk
+         sw1 = dtk*dtk'
+         sw2 = sg*sg'
+         sw3 = gmk'*sg
+         Sk = Sk + sw1/D - sw2/sw3
+      end
+      fk = fk_new;
+      iter = iter + 1;
+      gk = gk_new
+      sprintf('<h3>REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Iteration %d REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH</h3>\n',iter)
+      sprintf('<h4>STEP 2</h4>\n')
+      xk = xk_new;
+      dk = -Sk*gk
+      ak = inex_lsearch(xk,dk,fname,gname)
+      dtk = ak*dk
+      xk_new = xk + dtk;
+      fk_new = feval(fname,xk_new);
+      dfk = abs(fk - fk_new);
+      err = max(dfk,norm(dtk));
+      sprintf('<h4>STEP 3</h4>\n')
+      sprintf('Norm of delta is <b>%3.2f </b> and epsi is <b> %s </b> \n',err, epsi1)
+      k = k + 1;
+end
+format long
+disp('solution point:')
+xs = xk_new
+disp('objective function at the solution point:')
+fs = feval(fname,xs)
+format short
+disp('number of iterations at convergence:')
+k
+##### SOURCE END #####
+--></body></html>
