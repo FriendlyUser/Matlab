@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/bitfield/script"
@@ -50,5 +52,27 @@ func main() {
 		cmd = strings.Join(reg[:], " ")
 		// copy file to html directory
 		script.Exec(cmd).Stdout()
+	}
+
+	t, err := template.New("files").Parse(tmpl)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	file, err := os.Create(outputFolder + "/index.html")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer file.Close()
+	// remove outputFolder from htmlFiles
+	for i, file := range htmlFiles {
+		htmlFiles[i] = strings.Replace(file, outputFolder+"/", "", -1)
+	}
+	err = t.Execute(file, htmlFiles)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 }
