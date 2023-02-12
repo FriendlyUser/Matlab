@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bitfield/script"
@@ -21,13 +22,15 @@ func main() {
 	tmpl := `
 	<html>
 		<head>
-			<title>List of Files</title>
+			<title>List of Matlab Reports and Files</title>
+			<script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" data-client-id="ca-pub-2479144310234386">
+    		</script>
 		</head>
 		<body>
 			<h1>List of Files</h1>
 			<ul>
 			{{ range . }}
-				<li>{{ . }}</li>
+				<li><a href={{.}}>{{ . }}</a></li>
 			{{ end }}
 			</ul>
 		</body>
@@ -54,6 +57,9 @@ func main() {
 		script.Exec(cmd).Stdout()
 	}
 
+	// move ads.txt to html directory
+	script.Exec("mv ads.txt " + outputFolder).Stdout()
+
 	t, err := template.New("files").Parse(tmpl)
 	if err != nil {
 		fmt.Println(err)
@@ -68,7 +74,9 @@ func main() {
 	defer file.Close()
 	// remove outputFolder from htmlFiles
 	for i, file := range htmlFiles {
-		htmlFiles[i] = strings.Replace(file, outputFolder+"/", "", -1)
+		// get basename of file
+		baseName := filepath.Base(file)
+		htmlFiles[i] = baseName
 	}
 	err = t.Execute(file, htmlFiles)
 	if err != nil {
