@@ -23,8 +23,6 @@ func main() {
 	<html>
 		<head>
 			<title>List of Matlab Reports and Files</title>
-			<script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" data-client-id="ca-pub-2479144310234386">
-    		</script>
 		</head>
 		<body>
 			<h1>List of Files</h1>
